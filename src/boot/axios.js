@@ -2,7 +2,7 @@ import { defineBoot } from '#q-app/wrappers'
 import axios from 'axios'
 
 const api = axios.create({
-  baseURL: 'http://localhost:8080/',
+  baseURL: 'https://annreportopsbackend-production.up.railway.app/',
 })
 
 api.interceptors.request.use((config) => {
