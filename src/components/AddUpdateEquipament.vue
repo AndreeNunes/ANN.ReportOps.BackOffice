@@ -336,23 +336,26 @@ onMounted(async () => {
       $q.notify({ message: 'Erro ao carregar clientes para equipamento.', color: 'negative' })
     }
 
+    loadingInitial.value = false
+
     return
-  } else {
-    const equipament = await getEquipamentById(props.details.id)
-
-    if (equipament?.status === 200) {
-      hydrateFormFromObject(equipament.data.data)
-    } else {
-      $q.notify({ message: 'Erro ao carregar detalhes do equipamento.', color: 'negative' })
-    }
-
-    listClients.value = [
-      {
-        id: props.details.id_company,
-        name: props.details.company_name || 'Cliente do equipamento'
-      }
-    ]
   }
+  
+  const equipament = await getEquipamentById(props.details.id)
+
+  if (equipament?.status === 200) {
+    hydrateFormFromObject(equipament.data.data)
+  } else {
+    $q.notify({ message: 'Erro ao carregar detalhes do equipamento.', color: 'negative' })
+  }
+
+  listClients.value = [
+    {
+      id: props.details.id_company,
+      name: props.details.company_name || 'Cliente do equipamento'
+    }
+  ]
+  
 
   loadingInitial.value = false
 })

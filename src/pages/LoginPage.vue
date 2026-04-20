@@ -2,10 +2,18 @@
   <q-page class="flex flex-center">
     <div class="full-width row justify-center q-pa-md">
       <div class="col-12 col-sm-8 col-md-5 col-lg-4">
+        <div class="text-center q-mb-lg">
+          <img
+            alt="GGA logo"
+            src="~assets/GGA.jpg"
+            style="height: 300px"
+          >
+        </div>
+        
         <q-card flat bordered class="q-pa-lg">
           <q-form @submit.prevent="handleLogin">
             <div class="q-mb-md">
-              <div class="text-h6">Entrar</div>
+              <div class="text-h5 text-weight-bold">Bem-vindo!</div>
               <div class="text-subtitle2 text-grey-7">Acesse com seu e-mail e senha.</div>
             </div>
 
