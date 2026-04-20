@@ -208,12 +208,15 @@ import {
   digitsOnlySlice,
   CEP_MAX_DIGITS,
   ADDRESS_NUMBER_MAX_DIGITS,
+  unmask,
 } from '../utils/masks'
 import { getInfoCep } from '../service/cepService'
+import { createClient as createClientService, updateClient as updateClientService} from 'src/service/clientService'
 
 const props = defineProps({
   modelValue: { type: Boolean, default: false },
   details: { type: Object, default: null },
+  refresh: { type: Function, default: () => {} }
 })
 
 const emit = defineEmits(['update:modelValue', 'save'])
@@ -307,11 +310,12 @@ function strOrNull(v) {
 
 function buildPayload() {
   const f = form.value
+
   return {
     id: f.id,
     client_id: strOrNull(f.client_id),
     name: strOrNull(f.name),
-    document: strOrNull(f.document),
+    document: unmask(f.document),
     email: strOrNull(f.email),
     phone: strOrNull(f.phone),
     street: strOrNull(f.street),
@@ -327,15 +331,60 @@ function buildPayload() {
 }
 
 async function createClient(body) {
-  return Promise.resolve(body)
+  saveLoading.value = true
+
+  const response = await createClientService(body);
+
+  if (response?.status === 201) {
+    $q.notify({
+      message: "Cliente criado com sucesso!",
+      color: 'positive',
+      position: 'top',
+      icon: 'ion-md-checkmark-circle'
+    })
+  } else {
+    $q.notify({
+      message: "Erro ao criar cliente!",
+      color: 'negative',
+      position: 'top',
+      icon: 'ion-md-close-circle'
+    })
+  }
+
+  saveLoading.value = false
 }
 
 async function updateClient(body) {
-  return Promise.resolve(body)
+  saveLoading.value = true
+
+  const response = await updateClientService(body, form.value.id);
+
+  if (response?.status === 200) {
+    $q.notify({
+      message: "Cliente criado com sucesso!",
+      color: 'positive',
+      position: 'top',
+      icon: 'ion-md-checkmark-circle'
+    })
+  } else {
+    $q.notify({
+      message: "Erro ao criar cliente!",
+      color: 'negative',
+      position: 'top',
+      icon: 'ion-md-close-circle'
+    })
+  }
+
+  saveLoading.value = false
 }
 
 function close() {
   emit('update:modelValue', false)
+}
+
+function closeWithRefresh() {
+  emit('update:modelValue', false)
+  props.refresh();
 }
 
 function validateForm() {
@@ -366,7 +415,9 @@ async function onSave() {
   }
 
   const payload = buildPayload()
+
   saveLoading.value = true
+  
   try {
     if (isEdit.value) {
       await updateClient(payload)
@@ -374,7 +425,7 @@ async function onSave() {
       await createClient(payload)
     }
     emit('save', payload)
-    close()
+    closeWithRefresh()
   } catch (e) {
     console.error(e)
     $q.notify({

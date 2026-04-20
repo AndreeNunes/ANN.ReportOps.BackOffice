@@ -28,14 +28,33 @@ export function maskCnpjFromString(input) {
   return `${d.slice(0, 2)}.${d.slice(2, 5)}.${d.slice(5, 8)}/${d.slice(8, 12)}-${d.slice(12)}`
 }
 
-/**
- * Mantém apenas dígitos e limita o tamanho.
- * @param {string|null|undefined} input
- * @param {number} maxLen
- * @returns {string}
- */
+export const maskPhone = (value) => {
+  if (!value) return ''
+
+  const numbers = value.replace(/\D/g, '')
+
+  if (numbers.length <= 10) {
+    return numbers.replace(
+      /(\d{2})(\d{4})(\d{0,4})/,
+      (_, ddd, part1, part2) =>
+        part2 ? `(${ddd}) ${part1}-${part2}` : `(${ddd}) ${part1}`
+    )
+  }
+
+  return numbers.replace(
+    /(\d{2})(\d{5})(\d{0,4})/,
+    (_, ddd, part1, part2) =>
+      part2 ? `(${ddd}) ${part1}-${part2}` : `(${ddd}) ${part1}`
+  )
+}
+
 export function digitsOnlySlice(input, maxLen) {
   return String(input ?? '')
     .replace(/\D/g, '')
     .slice(0, maxLen)
+}
+
+export const unmask = (value) => {
+  if (!value) return ''
+  return value.replace(/\D/g, '')
 }
