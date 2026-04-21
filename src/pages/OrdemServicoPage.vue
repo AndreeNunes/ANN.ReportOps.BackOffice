@@ -1,228 +1,211 @@
 <template>
-  <q-page padding class="row ordem-page">
-    <!-- Left tree inline -->
-    <div v-if="treeVisible" class="left-panel column">
-      <q-input
-        v-model="filter"
-        outlined
-        dense
-        placeholder="Buscar empresas..."
-        class="q-mb-sm"
-      >
-        <template #prepend>
-          <q-icon name="ion-md-search" />
-        </template>
-      </q-input>
+  <q-page class="page-full">
+    <div class="row full-row no-gutters">
+      <div v-if="showLeft" class="col-4 panel panel-left">
+        <div class="panel-content">
+          <q-input
+            v-model="filter"
+            outlined
+            dense
+            placeholder="Buscar empresas..."
+            class="custom-input q-mb-sm"
+          >
+            <template #prepend>
+              <q-icon name="ion-md-search" />
+            </template>
 
-      <q-scroll-area class="left-scroll">
-        <q-list bordered dense>
-          <q-item-label header>Empresas</q-item-label>
+            <template v-slot:append>
+              <q-icon
+                v-if="filter !== ''"
+                name="clear"
+                class="cursor-pointer"
+                @click="resetFilter"
+              />
+            </template>
+          </q-input>
 
           <div v-if="loadingCompanies" class="row items-center justify-center q-pa-md">
             <q-spinner-dots size="30" />
           </div>
 
-          <q-expansion-item
-            v-for="company in filteredCompanies"
-            :key="company.id_company"
-            v-model="company.expanded"
-            dense
-            expand-separator
-            @show="onExpandCompany(company)"
-          >
-            <template #header>
-              <div class="row items-center justify-between" style="width:100%;">
-                <div class="row items-center ellipsis">
-                  <q-icon name="ion-md-business" class="q-mr-sm" />
-                  <div class="text-subtitle2 ellipsis">{{ company.label }}</div>
-                </div>
-                <q-badge color="primary">{{ company.total_ordens_service }}</q-badge>
-              </div>
-            </template>
-
-            <q-list dense>
-              <q-item v-if="company.loading">
-                <q-item-section>
-                  <q-spinner-dots size="20" />
-                </q-item-section>
-                <q-item-section>Carregando ordens...</q-item-section>
-              </q-item>
-
-              <q-item
-                v-for="order in company.orders || []"
-                :key="order.id"
-                clickable
-                @click="selectOrder(order)"
-              >
-                <q-item-section>
-                  <q-item-label>{{ order.OS_number }}</q-item-label>
-                </q-item-section>
-              </q-item>
-
-              <q-item v-if="company.orders && company.orders.length === 0">
-                <q-item-section>Nenhuma ordem encontrada</q-item-section>
-              </q-item>
-            </q-list>
-          </q-expansion-item>
-        </q-list>
-      </q-scroll-area>
-    </div>
-
-    <!-- Right panel -->
-    <div class="column right-panel q-pl-md" style="flex:1; min-width:0;">
-      <div class="row items-center justify-between q-mb-sm">
-        <div class="row items-center">
-          <q-btn flat dense round icon="ion-md-menu" @click="toggleTree" aria-label="Alternar árvore" />
-          <div class="text-h5 q-ml-sm">Ordens de Serviço</div>
+          <div v-else>
+            <q-tree
+              :nodes="ordersTrends"
+              default-expand-all
+              node-key="id_company"
+              @lazy-load="onLazyLoad"
+              :filter="filter"
+              :filter-method="filterTree"
+            />            
+          </div>
         </div>
       </div>
 
-      <q-scroll-area class="right-scroll">
-        <div class="q-pa-sm">
-          <div v-if="selectedOrderJson">
-            <q-card flat bordered>
-              <q-card-section>
-                <div class="text-h6 q-mb-sm">Detalhes da Ordem</div>
-                <pre class="json-pre">{{ selectedOrderJson }}</pre>
-              </q-card-section>
-            </q-card>
+      <div :class="showLeft ? 'col-8 panel panel-right' : 'col-12 panel panel-right'">
+        <div class="panel-content">
+          <div>
+            <q-btn outline size="sm" :icon="showLeft ? 'ion-md-arrow-back' : 'ion-md-arrow-forward'" color="grey-6" @click="toggleLeft" class="border" />
           </div>
+          <div class="q-mt-md">
+              <div v-if="loadingOrderDetails" class="row items-center justify-center q-pa-md">
+                <q-spinner-dots size="30" />
+              </div>
 
-          <div v-else class="text-grey">Selecione uma ordem à esquerda para ver o JSON</div>
+              <div v-else-if="orderSelected">
+                <form-order :order="orderSelected" />
+              </div>
+
+              <div v-else class="text-center q-pa-md">
+                <q-icon name="ion-md-information-circle-outline" size="4em" color="primary" />
+                <p class="text-grey font-semibold q-mt-md">Selecione uma ordem de serviço para ver os detalhes.</p>
+              </div>
+           </div>
         </div>
-      </q-scroll-area>
+      </div>
     </div>
   </q-page>
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue'
-import { useQuasar } from 'quasar'
-import { getOrderCounts, getOrdersByCompany, getOrderById } from '../service/reportService'
+import FormOrder from 'src/components/FormOrder.vue'
+import { getOrderById, getOrderCounts, getOrdersByCompany } from 'src/service/reportService'
+import { ref, onMounted } from 'vue'
 
-const $q = useQuasar()
-
-const companies = ref([])
-const loadingCompanies = ref(false)
+const showLeft = ref(true)
+const loadingCompanies = ref(true)
+const ordersTrends = ref([])
+const orderSelected = ref(null)
+const loadingOrderDetails = ref(false)
 const filter = ref('')
-const selectedOrderJson = ref(null)
-const treeVisible = ref(true)
+
 
 onMounted(async () => {
-  loadingCompanies.value = true
+  const response = await getOrderCounts()
 
-  try {
-    const response = await getOrderCounts()
-    const data = response.data?.data || []
-
-    companies.value = data.map((c) => ({
-      ...c,
-      orders: null,
-      loading: false,
-      expanded: false,
+  if (response.status == 200) {
+    ordersTrends.value = response.data.data.map(company => ({
+      id_company: company.id_company,
+      label: company.label.toUpperCase(),
+      count: company.total_ordens_service,
+      lazy: true,
+      children: [],
     }))
-  } catch (error) {
-    console.error(error)
-    $q.notify({ message: 'Erro ao carregar empresas', color: 'negative' })
-  } finally {
+
     loadingCompanies.value = false
+    return
   }
 })
 
-const filteredCompanies = computed(() => {
-  const q = filter.value.trim().toLowerCase()
-
-  if (!q) return companies.value
-
-  return companies.value.filter((c) => (c.label || '').toLowerCase().includes(q))
-})
-
-async function onExpandCompany(company) {
-  if (company.expanded && company.orders === null) {
-    company.loading = true
-
-    try {
-      const response = await getOrdersByCompany(company.id_company)
-      company.orders = response.data?.data || []
-    } catch (error) {
-      console.error(error)
-      $q.notify({ message: 'Erro ao carregar ordens da empresa', color: 'negative' })
-      company.orders = []
-    } finally {
-      company.loading = false
-    }
-  }
+function toggleLeft() {
+  showLeft.value = !showLeft.value
 }
 
-async function selectOrder(order) {
-  selectedOrderJson.value = null
+async function onLazyLoad({ node, key, done, fail }) {
+  console.log('Carregando dados para:', node.label, node.id)
 
   try {
-    const response = await getOrderById(order.id)
-    const payload = response.data?.data?.ordem_service ?? response.data?.data ?? response.data
-    selectedOrderJson.value = JSON.stringify(payload, null, 2)
-  } catch (error) {
-    console.error(error)
-    $q.notify({ message: 'Erro ao carregar ordem', color: 'negative' })
+    if (node.id?.startsWith('ORDER_')) {
+      loadingOrderDetails.value = true
+
+      const id = node.id.split('_')[1]
+
+      showLeft.value = false
+
+      const response = await getOrderById(id)
+
+      if (response.status === 200) {
+        const order = response.data.data
+        orderSelected.value = order
+        done && done()
+
+        loadingOrderDetails.value = false
+        return
+      }
+
+      loadingOrderDetails.value = false
+      showLeft.value = true
+
+      fail()
+
+      return
+    }
+
+    const companyId = key
+
+    if (!companyId) {
+      console.warn('ID da empresa não encontrado no nó:', node)
+      fail()
+
+      return
+    }
+
+    const response = await getOrdersByCompany(companyId)
+
+    if (response.status === 200) {
+      const orders = response.data.data.map(order => ({
+        id: "ORDER_" + order.id,
+        label: `Número de OS - ${order.OS_number}`,
+        lazy: true, 
+      }))
+
+      node.children = orders
+      done && done(orders)
+    } else {
+      fail && fail()
+    }
+  } catch (err) {
+    console.error('Erro ao carregar ordens:', err)
+    fail && fail()
   }
 }
 
-function toggleTree() {
-  treeVisible.value = !treeVisible.value
+const filterTree = (node, filter) => {
+  if (!filter) return true
+
+  if (node.id && String(node.id).startsWith('ORDER_')) return true
+
+  return node.label && node.label.toLowerCase().includes(filter.toLowerCase())
 }
+
+const resetFilter = () => {
+  filter.value = ''
+}
+
 </script>
 
 <style scoped>
-.ordem-page {
-  align-items: stretch;
-}
-.left-panel {
-  width: 640px;
-  max-width: 40%;
+.page-full {
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
-  height: calc(100vh - 120px);
 }
 
-.left-scroll {
+.full-row {
   flex: 1 1 auto;
-  min-height: 0;
+  display: flex;
+  gap: 0;
 }
-.right-panel {
+
+.panel {
+  box-sizing: border-box;
   display: flex;
   flex-direction: column;
-  height: calc(100vh - 120px);
-}
-.right-scroll {
-  flex: 1 1 auto;
-  min-height: 0;
-}
-.json-pre {
-  white-space: pre-wrap;
-  font-family: monospace;
-  font-size: 13px;
-}
-.open-tree-btn { display: none }
-.ellipsis {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
-/* Hide native scrollbars but keep content scrollable */
-.left-scroll,
-.left-scroll .q-scrollarea__content,
-.right-scroll,
-.right-scroll .q-scrollarea__content {
-  -ms-overflow-style: none; /* IE and Edge */
-  scrollbar-width: none; /* Firefox */
+.panel-left {
+  border-right: 1px solid #e0e0e0;
 }
-.left-scroll::-webkit-scrollbar,
-.left-scroll .q-scrollarea__content::-webkit-scrollbar,
-.right-scroll::-webkit-scrollbar,
-.right-scroll .q-scrollarea__content::-webkit-scrollbar {
-  display: none; /* WebKit */
-  width: 0;
-  height: 0;
+
+.panel-content {
+  overflow: auto;
+  padding: 16px;
 }
+
+.bg-red { background-color: #ffebee; }
+.bg-blue { background-color: #e3f2fd; }
+
+.border {
+  border-radius: 8px;
+}
+
 </style>

@@ -203,14 +203,6 @@ const columns = [
 		format: (val) => (val ? maskPhone(val) : "—"),
 	},
 	{
-		name: "created_at",
-		label: "Criado em",
-		field: "created_at",
-		align: "left",
-		sortable: true,
-		format: (val) => (val ? new Date(val).toLocaleString("pt-BR") : "—"),
-	},
-	{
 		name: "actions",
 		label: "Ações",
 		field: "id",
