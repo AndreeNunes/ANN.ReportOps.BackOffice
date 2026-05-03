@@ -8,179 +8,189 @@
     @update:model-value="emit('update:modelValue', $event)"
   >
     <q-card class="column full-height dialog-card">
-      <q-card-section class="row items-center q-pb-none">
-        <div class="text-h6">{{ isEdit ? 'Editar cliente' : 'Novo cliente' }}</div>
-        <q-space />
-        <q-btn flat round dense icon="ion-md-close" aria-label="Fechar" @click="close" />
-      </q-card-section>
-
-      <q-separator class="q-mt-md" />
-
-      <q-card-section class="col scroll">
-        <div class="column q-gutter-sm">
-          <q-input
-            v-model="form.name"
-            label="Nome"
-            dense
-            outlined
-            :disable="saveLoading"
-            hide-bottom-space
-            rounded
-            class="custom-input"
-          />
-          <q-input
-            :model-value="form.document"
-            label="Documento (CNPJ)"
-            dense
-            outlined
-            :disable="saveLoading"
-            hide-bottom-space
-            maxlength="18"
-            autocomplete="off"
-            class="custom-input"
-            @update:model-value="onDocumentUpdate"
-          />
-
-          <q-expansion-item
-            v-model="expandConta"
-            header-class="q-pa-none q-pl-sm q-mt-md"
-            header-style="border-bottom: 1px solid #e0e0e0;"
-            label="Informações de conta"
-          >
-            <div class="column q-col-gutter-sm q-pt-sm">
-              <q-input
-                v-model="form.email"
-                label="E-mail"
-                type="email"
-                dense
-                outlined
-                autocomplete="off"
-                :disable="saveLoading"
-                hide-bottom-space
-                class="custom-input"
-              />
-              <q-input
-                v-model="form.phone"
-                label="Telefone"
-                dense
-                outlined
-                :disable="saveLoading"
-                hide-bottom-space
-                class="custom-input"
-              />
-            </div>
-          </q-expansion-item>
-
-          <q-expansion-item
-            v-model="expandEndereco"
-            label="Endereço"
-            header-class="q-pa-none q-pl-sm"
-            header-style="border-bottom: 1px solid #e0e0e0;"
-          >
-            <div class="column q-pt-sm q-pb-sm">
-              <div class="row q-col-gutter-sm">
-                <div class="col-3">
-                  <q-input
-                    :model-value="form.zip_code"
-                    label="CEP"
-                    dense
-                    outlined
-                    :disable="saveLoading"
-                    :loading="cepLookupLoading"
-                    hide-bottom-space
-                    :maxlength="CEP_MAX_DIGITS"
-                    autocomplete="postal-code"
-                    class="custom-input"
-                    @update:model-value="onZipCodeUpdate"
-                    @blur="onCepBlur"
-                  />
-                </div>
-                <div class="col-7">
-                  <q-input
-                    v-model="form.street"
-                    label="Logradouro"
-                    dense
-                    outlined
-                    :disable="saveLoading"
-                    hide-bottom-space
-                    class="custom-input"
-                  />
-                </div>
-                <div class="col-2">
-                  <q-input
-                    :model-value="form.number"
-                    label="Número"
-                    dense
-                    outlined
-                    :disable="saveLoading"
-                    hide-bottom-space
-                    :maxlength="ADDRESS_NUMBER_MAX_DIGITS"
-                    autocomplete="off"
-                    class="custom-input"
-                    @update:model-value="onNumberUpdate"
-                  />
-                </div>
-                <div class="col-6">
-                  <q-input
-                    v-model="form.neighborhood"
-                    label="Bairro"
-                    dense
-                    outlined
-                    :disable="saveLoading"
-                    hide-bottom-space
-                    class="custom-input"
-                  />
-                </div>
-                <div class="col-6">
-                  <q-input
-                    v-model="form.city"
-                    label="Cidade"
-                    dense
-                    outlined
-                    :disable="saveLoading"
-                    hide-bottom-space
-                    class="custom-input"
-                  />
-                </div>
-                <div class="col-6">
-                  <q-input
-                    v-model="form.complement"
-                    label="Complemento"
-                    dense
-                    outlined
-                    :disable="saveLoading"
-                    hide-bottom-space
-                    class="custom-input"
-                  />
-                </div>
-                <div class="col-6">
-                  <q-input
-                    v-model="form.state"
-                    label="UF"
-                    dense
-                    outlined
-                    maxlength="2"
-                    :disable="saveLoading"
-                    hide-bottom-space
-                    class="custom-input"
-                  />
-                </div>
-              </div>
-            </div>
-          </q-expansion-item>
+      <q-card-section class="dialog-header">
+        <div class="dialog-header__icon">
+          <q-icon name="ion-md-business" size="22px" />
         </div>
+        <div class="col">
+          <div class="dialog-header__title">{{ isEdit ? 'Editar cliente' : 'Novo cliente' }}</div>
+          <div class="dialog-header__subtitle">
+            {{ isEdit ? 'Atualize os dados deste cliente' : 'Cadastre uma nova empresa no sistema' }}
+          </div>
+        </div>
+        <q-btn flat round dense icon="ion-md-close" aria-label="Fechar" class="dialog-header__close" @click="close" />
       </q-card-section>
 
       <q-separator />
 
-      <q-card-actions align="right" class="q-px-lg q-py-lg q-gutter-md">
+      <q-card-section class="col scroll dialog-body">
+        <div class="form-section">
+          <div class="form-section__title">Identificação</div>
+          <div class="column q-gutter-sm">
+            <q-input
+              v-model="form.name"
+              label="Nome"
+              dense
+              outlined
+              :disable="saveLoading"
+              hide-bottom-space
+              class="custom-input"
+            />
+            <q-input
+              :model-value="form.document"
+              label="Documento (CNPJ)"
+              dense
+              outlined
+              :disable="saveLoading"
+              hide-bottom-space
+              maxlength="18"
+              autocomplete="off"
+              class="custom-input"
+              @update:model-value="onDocumentUpdate"
+            />
+          </div>
+        </div>
+
+        <q-expansion-item
+          v-model="expandConta"
+          class="form-expansion"
+          header-class="form-expansion__header"
+          label="Informações de contato"
+          icon="ion-md-mail"
+        >
+          <div class="column q-col-gutter-sm q-pt-sm q-pb-sm">
+            <q-input
+              v-model="form.email"
+              label="E-mail"
+              type="email"
+              dense
+              outlined
+              autocomplete="off"
+              :disable="saveLoading"
+              hide-bottom-space
+              class="custom-input"
+            />
+            <q-input
+              v-model="form.phone"
+              label="Telefone"
+              dense
+              outlined
+              :disable="saveLoading"
+              hide-bottom-space
+              class="custom-input"
+            />
+          </div>
+        </q-expansion-item>
+
+        <q-expansion-item
+          v-model="expandEndereco"
+          label="Endereço"
+          icon="ion-md-pin"
+          class="form-expansion"
+          header-class="form-expansion__header"
+        >
+          <div class="q-pt-sm q-pb-sm">
+            <div class="row q-col-gutter-sm">
+              <div class="col-12 col-sm-3">
+                <q-input
+                  :model-value="form.zip_code"
+                  label="CEP"
+                  dense
+                  outlined
+                  :disable="saveLoading"
+                  :loading="cepLookupLoading"
+                  hide-bottom-space
+                  :maxlength="CEP_MAX_DIGITS"
+                  autocomplete="postal-code"
+                  class="custom-input"
+                  @update:model-value="onZipCodeUpdate"
+                  @blur="onCepBlur"
+                />
+              </div>
+              <div class="col-12 col-sm-7">
+                <q-input
+                  v-model="form.street"
+                  label="Logradouro"
+                  dense
+                  outlined
+                  :disable="saveLoading"
+                  hide-bottom-space
+                  class="custom-input"
+                />
+              </div>
+              <div class="col-12 col-sm-2">
+                <q-input
+                  :model-value="form.number"
+                  label="Número"
+                  dense
+                  outlined
+                  :disable="saveLoading"
+                  hide-bottom-space
+                  :maxlength="ADDRESS_NUMBER_MAX_DIGITS"
+                  autocomplete="off"
+                  class="custom-input"
+                  @update:model-value="onNumberUpdate"
+                />
+              </div>
+              <div class="col-12 col-sm-6">
+                <q-input
+                  v-model="form.neighborhood"
+                  label="Bairro"
+                  dense
+                  outlined
+                  :disable="saveLoading"
+                  hide-bottom-space
+                  class="custom-input"
+                />
+              </div>
+              <div class="col-12 col-sm-6">
+                <q-input
+                  v-model="form.city"
+                  label="Cidade"
+                  dense
+                  outlined
+                  :disable="saveLoading"
+                  hide-bottom-space
+                  class="custom-input"
+                />
+              </div>
+              <div class="col-12 col-sm-6">
+                <q-input
+                  v-model="form.complement"
+                  label="Complemento"
+                  dense
+                  outlined
+                  :disable="saveLoading"
+                  hide-bottom-space
+                  class="custom-input"
+                />
+              </div>
+              <div class="col-12 col-sm-6">
+                <q-input
+                  v-model="form.state"
+                  label="UF"
+                  dense
+                  outlined
+                  maxlength="2"
+                  :disable="saveLoading"
+                  hide-bottom-space
+                  class="custom-input"
+                />
+              </div>
+            </div>
+          </div>
+        </q-expansion-item>
+      </q-card-section>
+
+      <q-separator />
+
+      <q-card-actions align="right" class="dialog-footer q-gutter-sm">
         <q-btn
           flat
           no-caps
           class="footer-action-btn"
-          label="Fechar"
-          color="primary"
-          rounded
+          label="Cancelar"
+          color="grey-8"
           :disable="saveLoading"
           @click="close"
         />
@@ -190,9 +200,9 @@
           class="footer-action-btn"
           color="primary"
           :label="saveLabel"
-          rounded
           :loading="saveLoading"
           :disable="saveLoading"
+          icon="ion-md-checkmark"
           @click="onSave"
         />
       </q-card-actions>
@@ -484,17 +494,106 @@ async function onCepBlur() {
 }
 </script>
 
-<style scoped>
-.footer-action-btn {
-  padding-right: 20px;
-  padding-left: 20px;
-  height: 48px;
-  width: 120px;
+<style scoped lang="scss">
+.dialog-card {
+  min-width: min(720px, 100vw);
+  width: min(720px, 100vw);
+  border-top-left-radius: var(--radius-lg);
+  border-bottom-left-radius: var(--radius-lg);
+  overflow: hidden;
 }
 
-.dialog-card {
-  min-width: min(900px, 100vw);
-  border-top-left-radius: 16px;
-  border-bottom-left-radius: 16px;
+.dialog-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 22px 24px 18px;
+
+  &__icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+    background: var(--brand-50);
+    color: var(--brand-600);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  &__title {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--text-strong);
+    letter-spacing: -0.015em;
+    line-height: 1.25;
+  }
+
+  &__subtitle {
+    margin-top: 2px;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+  }
+
+  &__close {
+    color: var(--text-muted);
+  }
+}
+
+.dialog-body {
+  padding: 22px 24px;
+  background: var(--bg-muted);
+}
+
+.form-section {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  margin-bottom: 12px;
+
+  &__title {
+    font-size: 0.78rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-muted);
+    margin-bottom: 12px;
+  }
+}
+
+.form-expansion {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-md);
+  margin-bottom: 12px;
+  overflow: hidden;
+
+  :deep(.form-expansion__header) {
+    padding: 14px 16px;
+    font-weight: 600;
+    color: var(--text-strong);
+
+    .q-icon {
+      color: var(--brand-600);
+    }
+  }
+
+  :deep(.q-expansion-item__content) {
+    padding: 0 16px 8px;
+  }
+}
+
+.dialog-footer {
+  padding: 16px 24px;
+  background: var(--bg-surface);
+}
+
+.footer-action-btn {
+  padding: 0 20px;
+  height: 44px;
+  min-width: 120px;
+  border-radius: var(--radius-md);
+  font-weight: 600;
 }
 </style>

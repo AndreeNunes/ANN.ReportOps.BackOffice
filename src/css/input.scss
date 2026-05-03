@@ -1,23 +1,37 @@
 .custom-input {
   display: flex;
   align-items: center;
-  border-radius: 12px;
 
-  .q-field__native {
-    font-size: 14px;
-    font-style: normal;
-    font-weight: 400;
+  .q-field__control {
+    border-radius: var(--radius-md);
+    background: var(--bg-surface);
+    min-height: 44px;
+  }
+
+  .q-field__native,
+  .q-field__input {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--text-base);
+  }
+
+  .q-field__label {
+    font-weight: 500;
+    color: var(--text-muted);
   }
 
   &.q-field--outlined .q-field__control:before {
-    border-radius: 12px;
+    border-radius: var(--radius-md);
+    border-color: var(--border-strong);
   }
 
   &.q-field--outlined .q-field__control:hover:before {
-    border-radius: 12px;
+    border-radius: var(--radius-md);
+    border-color: var(--brand-500);
   }
 
-  &.q-field--outlined .q-field__control {
-    border-radius: 12px;
+  &.q-field--outlined.q-field--focused .q-field__control:after {
+    border-radius: var(--radius-md);
+    border-width: 2px;
   }
 }

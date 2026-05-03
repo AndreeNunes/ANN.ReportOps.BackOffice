@@ -13,45 +13,56 @@
       </div>
 
       <div v-else class="column full-height">
-        <q-card-section class="row items-center q-pb-none">
-          <div class="text-h6">{{ isEdit ? 'Editar equipamento' : 'Novo equipamento' }}</div>
-          <q-space />
-          <q-btn flat round dense icon="ion-md-close" aria-label="Fechar" @click="close" />
+        <q-card-section class="dialog-header">
+          <div class="dialog-header__icon">
+            <q-icon name="ion-md-build" size="22px" />
+          </div>
+          <div class="col">
+            <div class="dialog-header__title">{{ isEdit ? 'Editar equipamento' : 'Novo equipamento' }}</div>
+            <div class="dialog-header__subtitle">
+              {{ isEdit ? 'Atualize as especificações deste equipamento' : 'Cadastre um novo equipamento técnico' }}
+            </div>
+          </div>
+          <q-btn flat round dense icon="ion-md-close" aria-label="Fechar" class="dialog-header__close" @click="close" />
         </q-card-section>
 
-        <q-separator class="q-mt-md" />
+        <q-separator />
 
-        <q-card-section class="col scroll">
-          <div class="column q-col-gutter-md">
+        <q-card-section class="col scroll dialog-body">
+          <div class="form-section">
+            <div class="form-section__title">Identificação</div>
+            <div class="column q-col-gutter-sm">
+              <q-input
+                v-model="form.name"
+                label="Nome do equipamento"
+                dense
+                outlined
+                :disable="saveLoading"
+                hide-bottom-space
+                class="custom-input"
+              />
 
-            <q-input
-              v-model="form.name"
-              label="Nome"
-              dense
-              outlined
-              :disable="saveLoading"
-              hide-bottom-space
-              rounded
-              class="custom-input"
-            />
+              <q-select
+                v-model="form.company_id"
+                :options="listClients"
+                option-label="name"
+                option-value="id"
+                outlined
+                dense
+                input-debounce="0"
+                label="Cliente"
+                emit-value
+                map-options
+                class="custom-input"
+                clearable
+                :disable="saveLoading || isEdit"
+              />
+            </div>
+          </div>
 
-            <q-select
-              v-model="form.company_id"
-              :options="listClients"
-              option-label="name"
-              option-value="id"
-              outlined
-              dense
-              input-debounce="0"
-              label="Cliente"
-              emit-value
-              map-options
-              class="custom-input"
-              clearable
-              :disable="saveLoading || isEdit"
-            />
-
-            <div class="row q-col-gutter-md">
+          <div class="form-section">
+            <div class="form-section__title">Especificações técnicas</div>
+            <div class="row q-col-gutter-sm">
               <div class="col-4">
                 <q-input
                   v-model="form.manufacture_date_display"
@@ -195,14 +206,13 @@
 
         <q-separator />
 
-        <q-card-actions align="right" class="q-px-lg q-py-lg q-gutter-md">
+        <q-card-actions align="right" class="dialog-footer q-gutter-sm">
           <q-btn
             flat
             no-caps
             class="footer-action-btn"
-            label="Fechar"
-            color="primary"
-            rounded
+            label="Cancelar"
+            color="grey-8"
             :disable="saveLoading"
             @click="close"
           />
@@ -212,9 +222,9 @@
             class="footer-action-btn"
             color="primary"
             :label="saveLabel"
-            rounded
             :loading="saveLoading"
             :disable="saveLoading"
+            icon="ion-md-checkmark"
             @click="onSave"
           />
         </q-card-actions>
@@ -480,17 +490,88 @@ async function onSave() {
 }
 </script>
 
-<style scoped>
-.footer-action-btn {
-  padding-right: 20px;
-  padding-left: 20px;
-  height: 48px;
-  width: 120px;
+<style scoped lang="scss">
+.dialog-card {
+  min-width: min(820px, 100vw);
+  width: min(820px, 100vw);
+  border-top-left-radius: var(--radius-lg);
+  border-bottom-left-radius: var(--radius-lg);
+  overflow: hidden;
 }
 
-.dialog-card {
-  min-width: min(900px, 100vw);
-  border-top-left-radius: 16px;
-  border-bottom-left-radius: 16px;
+.dialog-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 22px 24px 18px;
+
+  &__icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+    background: #ede9fe;
+    color: #6d28d9;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  &__title {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--text-strong);
+    letter-spacing: -0.015em;
+    line-height: 1.25;
+  }
+
+  &__subtitle {
+    margin-top: 2px;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+  }
+
+  &__close {
+    color: var(--text-muted);
+  }
+}
+
+.dialog-body {
+  padding: 22px 24px;
+  background: var(--bg-muted);
+}
+
+.form-section {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  margin-bottom: 12px;
+
+  &__title {
+    font-size: 0.78rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-muted);
+    margin-bottom: 12px;
+  }
+
+  & .row + .row {
+    margin-top: 12px;
+  }
+}
+
+.dialog-footer {
+  padding: 16px 24px;
+  background: var(--bg-surface);
+}
+
+.footer-action-btn {
+  padding: 0 20px;
+  height: 44px;
+  min-width: 120px;
+  border-radius: var(--radius-md);
+  font-weight: 600;
 }
 </style>

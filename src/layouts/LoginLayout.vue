@@ -1,5 +1,5 @@
 <template>
-  <q-layout>
+  <q-layout view="lHh Lpr lFf" class="login-layout">
     <q-page-container>
       <router-view />
     </q-page-container>
@@ -7,3 +7,9 @@
 </template>
 
 <script setup></script>
+
+<style scoped>
+.login-layout {
+  background: var(--bg-page);
+}
+</style>
