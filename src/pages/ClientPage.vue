@@ -48,7 +48,7 @@
       no-data-label="Nenhum cliente encontrado"
     >
       <template #no-data>
-        <div class="empty-state">
+        <div v-if="!loading" class="empty-state">
           <q-icon name="ion-md-business" size="42px" />
           <div class="empty-state__title">Nenhum cliente encontrado</div>
           <div class="empty-state__hint">
@@ -330,9 +330,12 @@ const toEquipaments = (row) => {
 }
 
 .empty-state {
+  width: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
+  text-align: center;
   padding: 48px 16px;
   color: var(--text-faint);
 

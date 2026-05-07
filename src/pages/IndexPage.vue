@@ -86,12 +86,9 @@
                 OS #{{ order.OS_number || '—' }}
               </q-item-label>
               <q-item-label caption>
-                {{ order.name_company || 'Empresa não informada' }}
-                <span v-if="order.name_equipament"> • {{ order.name_equipament }}</span>
+                {{ order.company_name || 'Empresa não informada' }}
+                <span v-if="order.equipament_name"> • {{ order.equipament_name }}</span>
               </q-item-label>
-            </q-item-section>
-            <q-item-section side>
-              <span class="status-chip status-chip--info">Concluída</span>
             </q-item-section>
           </q-item>
         </q-list>
@@ -146,9 +143,7 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { getClients } from '../service/clientService'
-import { getEquipaments } from '../service/equipamentService'
-import { getOrders } from '../service/reportService'
+import { getDashboard } from '../service/reportService'
 
 const loading = ref(true)
 const clientCount = ref(0)
@@ -197,24 +192,14 @@ const stats = computed(() => [
 async function loadDashboard() {
   loading.value = true
   try {
-    const [clientsRes, equipsRes, ordersRes] = await Promise.allSettled([
-      getClients(),
-      getEquipaments(),
-      getOrders(),
-    ])
+    const response = await getDashboard()
+    const data = response?.data?.data
 
-    if (clientsRes.status === 'fulfilled' && clientsRes.value?.data?.data) {
-      clientCount.value = clientsRes.value.data.data.length
-    }
-
-    if (equipsRes.status === 'fulfilled' && equipsRes.value?.data?.data) {
-      equipamentCount.value = equipsRes.value.data.data.length
-    }
-
-    if (ordersRes.status === 'fulfilled' && ordersRes.value?.data?.data) {
-      const list = ordersRes.value.data.data
-      orderCount.value = list.length
-      recentOrders.value = list.slice(0, 5)
+    if (data) {
+      clientCount.value = data.totals?.companies ?? 0
+      equipamentCount.value = data.totals?.equipaments ?? 0
+      orderCount.value = data.totals?.reports ?? 0
+      recentOrders.value = data.last_orders ?? []
     }
   } finally {
     loading.value = false

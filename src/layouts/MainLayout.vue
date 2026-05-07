@@ -19,10 +19,6 @@
 
         <q-space />
 
-        <q-btn flat round dense icon="ion-md-notifications-outline" class="header-icon-btn">
-          <q-tooltip class="bg-dark">Notificações</q-tooltip>
-        </q-btn>
-
         <q-btn flat dense class="user-chip">
           <q-avatar size="32px" class="user-avatar">
             <span>{{ userInitials }}</span>

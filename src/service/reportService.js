@@ -11,6 +11,17 @@ export const getOrders = () => {
     })
 }
 
+export const getDashboard = () => {
+  return api
+    .get('v1/report/dashboard/web')
+    .then((response) => response)
+    .catch((error) => {
+      console.error(error)
+
+      throw error
+    })
+}
+
 export const getOrderById = (orderId) => {
   return api
     .get(`v1/report/orders/${orderId}/web`)

@@ -74,7 +74,7 @@
       no-data-label="Nenhum equipamento encontrado"
     >
       <template #no-data>
-        <div class="empty-state">
+        <div v-if="!loading" class="empty-state">
           <q-icon name="ion-md-build" size="42px" />
           <div class="empty-state__title">Nenhum equipamento encontrado</div>
           <div class="empty-state__hint">
@@ -392,9 +392,12 @@ const confirmDelete = (idCompany, id) => {
 }
 
 .empty-state {
+  width: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
+  text-align: center;
   padding: 48px 16px;
   color: var(--text-faint);
 
