@@ -67,7 +67,7 @@ export const deleteEquipament = (idCompany, id) => {
 
 export const getEquipamentsByCompany = (idCompany) => {
   return api
-    .get(`v1/equipament/web/company/${idCompany}`)
+    .get(`v1/equipament/web/names/${idCompany}`)
     .then((response) => response)
     .catch((error) => {
       if (error.response) {

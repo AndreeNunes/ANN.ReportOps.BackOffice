@@ -1,7 +1,4 @@
 .custom-input {
-  display: flex;
-  align-items: center;
-
   .q-field__control {
     border-radius: var(--radius-md);
     background: var(--bg-surface);
@@ -13,6 +10,10 @@
     font-size: 0.9rem;
     font-weight: 500;
     color: var(--text-base);
+    border: none;
+    outline: none;
+    box-shadow: none;
+    background: transparent;
   }
 
   .q-field__label {
@@ -22,7 +23,7 @@
 
   &.q-field--outlined .q-field__control:before {
     border-radius: var(--radius-md);
-    border-color: var(--border-strong);
+    border: 1px solid var(--border-strong);
   }
 
   &.q-field--outlined .q-field__control:hover:before {
@@ -30,8 +31,16 @@
     border-color: var(--brand-500);
   }
 
+  &.q-field--outlined .q-field__control:after {
+    border-radius: var(--radius-md);
+    border: 0 solid transparent;
+    height: 100%;
+    bottom: 0;
+    transform: none;
+  }
+
   &.q-field--outlined.q-field--focused .q-field__control:after {
     border-radius: var(--radius-md);
-    border-width: 2px;
+    border: 2px solid var(--brand-500);
   }
 }

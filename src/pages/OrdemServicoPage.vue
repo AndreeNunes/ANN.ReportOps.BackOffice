@@ -13,7 +13,7 @@
           unelevated
           icon="ion-md-add"
           label="Adicionar ordem de serviço"
-          @click="() => {}"
+          @click="openAddOrder"
           class="primary-action-btn"
           rounded
         />
@@ -70,28 +70,85 @@
 
       <template #body-cell-actions="props">
         <q-td :props="props">
-          <q-btn
-            color="primary"
-            unelevated
-            icon="ion-md-eye"
-            label="Visualizar"
-            @click="() => {}"
-            rounded
-            size="sm"
-          />
+          <div class="row q-gutter-sm justify-center no-wrap">
+            <q-btn
+              color="primary"
+              unelevated
+              icon="ion-md-create"
+              label="Editar"
+              @click="openEditOrder(props.row)"
+              rounded
+              size="sm"
+            />
+            <q-btn
+              color="secondary"
+              unelevated
+              icon="ion-md-download"
+              label="PDF"
+              :loading="pdfLoadingId === props.row.id"
+              :disable="pdfLoadingId && pdfLoadingId !== props.row.id"
+              @click="downloadOrderPdf(props.row)"
+              rounded
+              size="sm"
+            />
+          </div>
         </q-td>
       </template>
     </q-table>
+
+    <AddUpdateOrdemServico
+      v-if="orderDialogOpen"
+      v-model:modelValue="orderDialogOpen"
+      :details="orderFormDetails"
+      :refresh="loadOrders"
+    />
   </q-page>
 </template>
 
 <script setup>
 import { getOrders } from 'src/service/reportService'
 import { ref, computed, onMounted } from 'vue'
+import { useQuasar } from 'quasar'
+import AddUpdateOrdemServico from 'src/components/AddUpdateOrdemServico.vue'
+import { generateOrderPdf } from 'src/utils/generateOrderPdf'
+
+const $q = useQuasar()
 
 const orders = ref([])
 const loading = ref(false)
 const search = ref('')
+
+const orderDialogOpen = ref(false)
+const orderFormDetails = ref(null)
+const pdfLoadingId = ref(null)
+
+function openAddOrder() {
+  orderFormDetails.value = null
+  orderDialogOpen.value = true
+}
+
+function openEditOrder(row) {
+  orderFormDetails.value = row
+  orderDialogOpen.value = true
+}
+
+async function downloadOrderPdf(row) {
+  if (!row?.id) return
+  pdfLoadingId.value = row.id
+  try {
+    await generateOrderPdf(row.id)
+  } catch (err) {
+    console.error(err)
+    $q.notify({
+      message: err?.message || 'Erro ao gerar o PDF.',
+      color: 'negative',
+      position: 'top',
+      icon: 'ion-md-close-circle',
+    })
+  } finally {
+    pdfLoadingId.value = null
+  }
+}
 
 const pagination = ref({
   page: 1,
@@ -149,17 +206,19 @@ const filteredOrders = computed(() => {
   })
 })
 
-onMounted(async () => {
+async function loadOrders() {
   loading.value = true
   try {
     const response = await getOrders()
     if (response.status === 200) {
-      orders.value = response.data.data
+      orders.value = response.data.data || []
     }
   } finally {
     loading.value = false
   }
-})
+}
+
+onMounted(loadOrders)
 </script>
 
 <style scoped lang="scss">

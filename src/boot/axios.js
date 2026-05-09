@@ -2,8 +2,8 @@ import { defineBoot } from "#q-app/wrappers";
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: 'https://annreportopsbackend-production.up.railway.app/',
-  //baseURL: "http://localhost:8080/",
+  // baseURL: 'https://annreportopsbackend-production.up.railway.app/',
+  baseURL: "http://localhost:8080/",
 });
 
 api.interceptors.request.use((config) => {
@@ -21,8 +21,9 @@ api.interceptors.response.use(
   (error) => {
     if (
       error.response?.status === 401 &&
-      !["v1/web/login"].includes(error.config.url)
+      !["/v1/web/login"].includes(error.config.url)
     ) {
+      localStorage.clear();
       window.location.href = "/";
     }
 

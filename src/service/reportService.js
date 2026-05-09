@@ -32,3 +32,33 @@ export const getOrderById = (orderId) => {
       throw error
     })
 }
+
+export const createReport = (body) => {
+  return api
+    .post('v1/report/web', body)
+    .then((response) => response)
+    .catch((error) => {
+      if (error.response) return error.response
+      return null
+    })
+}
+
+export const addReportReference = (body) => {
+  return api
+    .post('v1/report/reference/web', body)
+    .then((response) => response)
+    .catch((error) => {
+      if (error.response) return error.response
+      return null
+    })
+}
+
+export const updateReportReference = (body) => {
+  return api
+    .put('v1/report/reference/web', body)
+    .then((response) => response)
+    .catch((error) => {
+      if (error.response) return error.response
+      return null
+    })
+}
