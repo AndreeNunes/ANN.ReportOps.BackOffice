@@ -43,6 +43,16 @@ export const createReport = (body) => {
     })
 }
 
+export const deleteReport = (reportId) => {
+  return api
+    .delete(`v1/report/web/${reportId}`)
+    .then((response) => response)
+    .catch((error) => {
+      if (error.response) return error.response
+      throw error
+    })
+}
+
 export const addReportReference = (body) => {
   return api
     .post('v1/report/reference/web', body)

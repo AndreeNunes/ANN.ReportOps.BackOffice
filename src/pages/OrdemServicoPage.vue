@@ -70,27 +70,42 @@
 
       <template #body-cell-actions="props">
         <q-td :props="props">
-          <div class="row q-gutter-sm justify-center no-wrap">
+          <div class="row no-wrap items-center justify-center q-gutter-x-xs">
             <q-btn
-              color="primary"
-              unelevated
+              flat
+              round
+              dense
               icon="ion-md-create"
-              label="Editar"
+              color="primary"
+              aria-label="Editar"
               @click="openEditOrder(props.row)"
-              rounded
-              size="sm"
-            />
+            >
+              <q-tooltip>Editar</q-tooltip>
+            </q-btn>
             <q-btn
-              color="secondary"
-              unelevated
+              flat
+              round
+              dense
               icon="ion-md-download"
-              label="PDF"
+              color="primary"
+              aria-label="Baixar PDF"
               :loading="pdfLoadingId === props.row.id"
               :disable="pdfLoadingId && pdfLoadingId !== props.row.id"
               @click="downloadOrderPdf(props.row)"
-              rounded
-              size="sm"
-            />
+            >
+              <q-tooltip>Baixar PDF</q-tooltip>
+            </q-btn>
+            <q-btn
+              flat
+              round
+              dense
+              icon="ion-md-trash"
+              color="negative"
+              aria-label="Remover"
+              @click="deleteOrder(props.row)"
+            >
+              <q-tooltip>Remover</q-tooltip>
+            </q-btn>
           </div>
         </q-td>
       </template>
@@ -106,7 +121,7 @@
 </template>
 
 <script setup>
-import { getOrders } from 'src/service/reportService'
+import { getOrders, deleteReport } from 'src/service/reportService'
 import { ref, computed, onMounted } from 'vue'
 import { useQuasar } from 'quasar'
 import AddUpdateOrdemServico from 'src/components/AddUpdateOrdemServico.vue'
@@ -150,6 +165,40 @@ async function downloadOrderPdf(row) {
   }
 }
 
+function deleteOrder(row) {
+  if (!row?.id) return
+  $q.dialog({
+    title: 'Remover ordem de serviço',
+    message: `Tem certeza que deseja remover a OS #${row.OS_number || ''}? Esta ação não poderá ser desfeita.`,
+    cancel: { label: 'Cancelar', flat: true, color: 'grey-8' },
+    ok: { label: 'Remover', unelevated: true, color: 'negative' },
+    persistent: true,
+  }).onOk(async () => {
+    try {
+      const response = await deleteReport(row.id)
+      if (response && (response.status === 200 || response.status === 204)) {
+        $q.notify({
+          message: 'Ordem de serviço removida com sucesso.',
+          color: 'positive',
+          position: 'top',
+          icon: 'ion-md-checkmark-circle',
+        })
+        await loadOrders()
+      } else {
+        throw new Error(response?.data?.message || 'Erro ao remover a ordem de serviço.')
+      }
+    } catch (err) {
+      console.error(err)
+      $q.notify({
+        message: err?.message || 'Erro ao remover a ordem de serviço.',
+        color: 'negative',
+        position: 'top',
+        icon: 'ion-md-close-circle',
+      })
+    }
+  })
+}
+
 const pagination = ref({
   page: 1,
   rowsPerPage: 50,
@@ -167,7 +216,7 @@ const columns = [
   },
   {
     name: 'name_company',
-    label: 'Empresa',
+    label: 'Cliente',
     field: (row) => row.name_company ?? '—',
     align: 'left',
     sortable: true,

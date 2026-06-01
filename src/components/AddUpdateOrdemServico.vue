@@ -219,11 +219,12 @@
             <q-step :name="4" title="Leituras" icon="ion-md-speedometer" :done="step > 4">
               <div class="form-section">
                 <div class="form-section__title">Óleo</div>
+                <div class="field-label">Nível de óleo lubrificante</div>
                 <div class="row q-col-gutter-md items-stretch">
+
                   <div class="col-12 col-md-6">
-                    <div class="field-label">Nível de óleo lubrificante</div>
                     <q-btn-toggle
-                      v-model="form.rr_lubricating_oil_level"
+                      v-model="form.rr_lubricating_oil_level" 
                       :options="oilLevelOptions"
                       no-caps
                       unelevated
@@ -1050,11 +1051,19 @@ async function onSave() {
   try {
     const orderServiceId = generateUUID()
 
-    const reportIdToUse = isEdit.value && form.value.reportId
+    const reportId = isEdit.value && form.value.reportId
       ? form.value.reportId
       : orderServiceId
 
-    const reportResponse = await createReport({ id: reportIdToUse, type: 'ORDEM_SERVICE' })
+    const referenceId = isEdit.value && form.value.id
+      ? form.value.id
+      : orderServiceId
+
+    const reportResponse = await createReport({
+      id: reportId,
+      id_reference: referenceId,
+      type: 'ORDEM_SERVICE',
+    })
 
     if (reportResponse?.status !== 200) {
       $q.notify({
@@ -1067,17 +1076,11 @@ async function onSave() {
     }
 
     const isExists = reportResponse.data?.data?.is_exists
-    const idReference = reportResponse.data?.data?.report?.id_reference
-
-    if (!idReference) {
-      $q.notify({ message: 'Resposta inválida do servidor.', color: 'negative', position: 'top' })
-      return
-    }
-
+    
     const orderService = buildOrderServicePayload()
 
     const requestRef = {
-      id: idReference,
+      id: referenceId,
       order_service: { id: orderServiceId, ...orderService },
     }
 
@@ -1085,7 +1088,7 @@ async function onSave() {
       ? await updateReportReference(requestRef)
       : await addReportReference(requestRef)
 
-    if (refResponse?.status === 200) {
+    if (refResponse?.status === 200) {  
       $q.notify({
         message: isEdit.value || isExists ? 'OS atualizada com sucesso!' : 'OS criada com sucesso!',
         color: 'positive',
@@ -1093,8 +1096,8 @@ async function onSave() {
         icon: 'ion-md-checkmark-circle',
       })
       form.value.id = orderServiceId
-      form.value.reportId = idReference
-      emit('save', { orderServiceId, idReference })
+      form.value.reportId = referenceId
+      emit('save', { orderServiceId, idReference: referenceId })
       closeWithRefresh()
     } else {
       $q.notify({
@@ -1368,9 +1371,15 @@ const YesNoRow = {
 
 .level-toggle {
   width: 100%;
+  height: 44px;
   border: 1px solid var(--border-soft);
   border-radius: var(--radius-md);
   overflow: hidden;
+}
+
+.level-toggle :deep(.q-btn) {
+  height: 44px;
+  min-height: 44px;
 }
 
 .level-toggle--baixo :deep(.q-btn--active),
