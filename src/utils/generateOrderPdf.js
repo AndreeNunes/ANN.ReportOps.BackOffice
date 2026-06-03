@@ -2,8 +2,20 @@ import jsPDF from 'jspdf'
 import html2canvas from 'html2canvas'
 import { getOrderById } from 'src/service/reportService'
 import { reportTemplate } from 'src/utils/reportTemplate'
+import ggaLogo from 'src/assets/GGA.jpg'
 
 const A4_WIDTH_PX = 794
+
+async function urlToDataUrl(url) {
+  const res = await fetch(url)
+  const blob = await res.blob()
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onloadend = () => resolve(reader.result)
+    reader.onerror = reject
+    reader.readAsDataURL(blob)
+  })
+}
 
 function splitRst(value) {
   const parts = String(value ?? '').split('&')
@@ -164,14 +176,28 @@ async function renderHtmlToCanvas(html) {
       windowWidth: A4_WIDTH_PX,
     })
 
-    return canvas
+    // Posições (em pixels do canvas) onde é seguro quebrar a página:
+    // os limites de cada linha da tabela e dos blocos (assinatura, anexos).
+    const scaleY = canvas.height / target.scrollHeight
+    const blocks = Array.from(doc.querySelectorAll('tr, .signature, .attachment-item'))
+    const breaks = new Set()
+    blocks.forEach((el) => {
+      const rect = el.getBoundingClientRect()
+      breaks.add(Math.round(rect.top * scaleY))
+      breaks.add(Math.round(rect.bottom * scaleY))
+    })
+    const breakpoints = Array.from(breaks)
+      .filter((v) => v > 0 && v < canvas.height)
+      .sort((a, b) => a - b)
+
+    return { canvas, breakpoints }
   } finally {
     document.body.removeChild(iframe)
   }
 }
 
 const PAGE_BORDER_MARGIN_MM = 6
-const PAGE_INNER_PADDING_MM = 4
+const PAGE_INNER_PADDING_MM = 0
 
 function drawPageBorder(pdf, pageW, pageH) {
   pdf.setLineWidth(0.4)
@@ -184,7 +210,19 @@ function drawPageBorder(pdf, pageW, pageH) {
   )
 }
 
-function canvasToPdf(canvas, fileName) {
+// Dado o início da fatia e o fim ideal (limite de altura da página),
+// recua até o ponto de quebra mais próximo para não cortar uma linha no meio.
+function pickCut(y, idealEnd, breakpoints, totalPx) {
+  if (idealEnd >= totalPx) return totalPx
+  let best = -1
+  for (const b of breakpoints) {
+    if (b > y && b <= idealEnd) best = b
+    else if (b > idealEnd) break
+  }
+  return best > y ? best : idealEnd
+}
+
+function canvasToPdf(canvas, breakpoints, fileName) {
   const pdf = new jsPDF('p', 'mm', 'a4')
   const pageW = pdf.internal.pageSize.getWidth()
   const pageH = pdf.internal.pageSize.getHeight()
@@ -202,7 +240,9 @@ function canvasToPdf(canvas, fileName) {
   let firstPage = true
 
   while (y < totalPx) {
-    const sliceH = Math.min(slicePx, totalPx - y)
+    const idealEnd = y + slicePx
+    const cut = pickCut(y, idealEnd, breakpoints, totalPx)
+    const sliceH = cut - y
     const slice = document.createElement('canvas')
     slice.width = canvas.width
     slice.height = sliceH
@@ -217,7 +257,7 @@ function canvasToPdf(canvas, fileName) {
     pdf.addImage(sliceImg, 'JPEG', contentX, contentY, contentW, sliceMm)
     drawPageBorder(pdf, pageW, pageH)
 
-    y += sliceH
+    y = cut
     firstPage = false
   }
 
@@ -241,7 +281,8 @@ export async function generateOrderPdf(orderId) {
   }
 
   const dto = buildDto(order)
+  dto.logo = await urlToDataUrl(ggaLogo).catch(() => '')
   const html = reportTemplate(dto)
-  const canvas = await renderHtmlToCanvas(html)
-  canvasToPdf(canvas, buildFileName(order))
+  const { canvas, breakpoints } = await renderHtmlToCanvas(html)
+  canvasToPdf(canvas, breakpoints, buildFileName(order))
 }
